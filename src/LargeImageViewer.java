@@ -102,10 +102,10 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 	}
 
 	protected void checkAnchor(int screen_width, int screen_height) {
-		int max_anchor_x = (int) (width - (screen_width * scale) / 2);
-		int max_anchor_y = (int) (height - (screen_height * scale) / 2);
-		int min_anchor_x = (int) ((screen_width * scale) / 2);
-		int min_anchor_y = (int) ((screen_height * scale) / 2);
+		int max_anchor_x = (int) (width - screen_width / scale / 2);
+		int max_anchor_y = (int) (height - screen_height / scale / 2);
+		int min_anchor_x = (int) (screen_width / scale / 2);
+		int min_anchor_y = (int) (screen_height / scale / 2);
 
 		if (anchor.x > max_anchor_x) {
 			anchor.x = max_anchor_x;
@@ -191,8 +191,8 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent event) {
-		//scale *= Math.pow(2.0, event.getWheelRotation());
-		scale -= event.getWheelRotation() * 0.075;
+		scale *= Math.pow(2.0, -event.getWheelRotation());
+		//scale -= event.getWheelRotation() * 0.075;
 		repaint();
 	}
 }
