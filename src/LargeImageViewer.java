@@ -1,10 +1,9 @@
 import java.io.File;
 import java.io.IOException;
-
 import java.awt.Point;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -13,7 +12,6 @@ import java.awt.event.MouseWheelListener;
 import java.awt.event.MouseMotionListener;
 
 import javax.imageio.ImageIO;
-
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 
@@ -42,7 +40,7 @@ public class LargeImageViewer extends JFrame {
 
 @SuppressWarnings("serial")
 class InnerComponent extends JComponent implements MouseListener, MouseMotionListener, MouseWheelListener {
-	protected BufferedImage tiles[][];
+	protected BufferedImage[][] tiles, cache;
 
 	protected final int tileSize;
 
@@ -50,7 +48,7 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 
 	protected Point anchor, dragStart;
 
-	protected double scale = 1;	
+	protected double scale = 1;
 
 	public InnerComponent(BufferedImage image) {
 		this(image, 100);
@@ -87,11 +85,27 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 
 		return paddedImage;
 	}
+	
+	protected void cleanCache() {
+		if(cache != null) {
+			int i,j;
+			for (i = 0 ; i < cols ; i++) {
+				for (j = 0 ; j < rows ; j++) {
+					BufferedImage image = cache[i][j];
+					if(image != null) {
+						image.flush();
+					}
+				}
+			}
+		}
+		cache = new BufferedImage[cols][rows];
+	}
 
 	protected void calculateTiles(BufferedImage image) {
 		rows = height / tileSize;
 		cols = width / tileSize;
 		tiles = new BufferedImage[cols][rows];
+		cleanCache();
 
 		for (int x = 0; x < cols; x++) {
 			for (int y = 0; y < rows; y++) {
@@ -153,14 +167,18 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 				int scaledTileSize = (int) (tileSize * scale);
 
 				if(scale != 1.0) {
-					BufferedImage tmp = new BufferedImage(scaledTileSize, scaledTileSize, image.getType());
-			        Graphics2D tmpG = tmp.createGraphics();
-			        //tmpG.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-			        tmpG.drawImage(image, 0, 0, scaledTileSize, scaledTileSize, null);
-			        tmpG.dispose();
-			        
-			        image.flush();
-			        image = tmp;
+					BufferedImage cachedImage = cache[x][y];
+					if(cachedImage != null) {
+						image = cachedImage;
+					} else {
+						BufferedImage tmp = new BufferedImage(scaledTileSize, scaledTileSize, image.getType());
+				        Graphics2D tmpG = tmp.createGraphics();
+				        tmpG.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+				        tmpG.drawImage(image, 0, 0, scaledTileSize, scaledTileSize, null);
+				        tmpG.dispose();
+				        
+				        image = tmp;
+					}					
 				}
 				
 				g2d.drawImage(image, x_cood, y_cood, null);
@@ -183,8 +201,8 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 	@Override
 	public void mouseDragged(MouseEvent event) {
 		Point dragEnd = event.getPoint();
-		anchor.x -= dragEnd.x - dragStart.x;
-		anchor.y -= dragEnd.y - dragStart.y;
+		anchor.x -= (dragEnd.x - dragStart.x) / scale;
+		anchor.y -= (dragEnd.y - dragStart.y) / scale;
 		dragStart = dragEnd;
 		repaint();
 	}
@@ -193,6 +211,7 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 	public void mouseWheelMoved(MouseWheelEvent event) {
 		scale *= Math.pow(2.0, -event.getWheelRotation());
 		//scale -= event.getWheelRotation() * 0.075;
+		cleanCache();
 		repaint();
 	}
 }
