@@ -1,16 +1,19 @@
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
+import java.awt.Point;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+
+import java.awt.image.BufferedImage;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.awt.event.MouseMotionListener;
+
 import javax.imageio.ImageIO;
+
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 
@@ -93,15 +96,16 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 		for (int x = 0; x < cols; x++) {
 			for (int y = 0; y < rows; y++) {
 				tiles[x][y] = image.getSubimage(tileSize * x, tileSize * y, tileSize, tileSize);
+				
 			}
 		}
 	}
 
 	protected void checkAnchor(int screen_width, int screen_height) {
-		int max_anchor_x = width - screen_width / 2;
-		int max_anchor_y = height - screen_height / 2;
-		int min_anchor_x = screen_width / 2;
-		int min_anchor_y = screen_height / 2;
+		int max_anchor_x = (int) (width - (screen_width * scale) / 2);
+		int max_anchor_y = (int) (height - (screen_height * scale) / 2);
+		int min_anchor_x = (int) ((screen_width * scale) / 2);
+		int min_anchor_y = (int) ((screen_height * scale) / 2);
 
 		if (anchor.x > max_anchor_x) {
 			anchor.x = max_anchor_x;
@@ -128,8 +132,8 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 		int rows_on_screen = (int) Math.ceil(screen_width / (tileSize * scale)) + 1;
 		int cols_on_screen = (int) Math.ceil(screen_height / (tileSize * scale)) + 1;
 
-		int first_tile_index_x = (int) Math.floor((anchor.x - (screen_width * scale) / 2) / tileSize);
-		int first_tile_index_y = (int) Math.floor((anchor.y - (screen_height * scale) / 2) / tileSize);
+		int first_tile_index_x = (int) Math.floor(((anchor.x*scale) - screen_width / 2) / (tileSize*scale));
+		int first_tile_index_y = (int) Math.floor(((anchor.y*scale) - screen_height / 2) / (tileSize*scale));
 
 		int last_tile_index_x = first_tile_index_x + rows_on_screen;
 		int last_tile_index_y = first_tile_index_y + cols_on_screen;
@@ -142,8 +146,8 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 					continue;
 				}
 
-				x_cood = (int) (x * tileSize * scale - anchor.x + screen_width / 2);
-				y_cood = (int) (y * tileSize * scale - anchor.y + screen_height / 2);
+				x_cood = (int) (x * tileSize * scale - anchor.x * scale + screen_width / 2);
+				y_cood = (int) (y * tileSize * scale - anchor.y * scale + screen_height / 2);
 				
 				BufferedImage image = tiles[x][y];
 				int scaledTileSize = (int) (tileSize * scale);
@@ -187,7 +191,8 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent event) {
-		scale += 0.5 * event.getWheelRotation();
+		//scale *= Math.pow(2.0, event.getWheelRotation());
+		scale -= event.getWheelRotation() * 0.075;
 		repaint();
 	}
 }
