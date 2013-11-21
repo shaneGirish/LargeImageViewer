@@ -178,7 +178,8 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 				        tmpG.dispose();
 				        
 				        image = tmp;
-					}					
+				        cache[x][y] = tmp;
+					}
 				}
 				
 				g2d.drawImage(image, x_cood, y_cood, null);
