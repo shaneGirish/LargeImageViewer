@@ -47,7 +47,7 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 
 	protected Point anchor, dragStart;
 
-	protected double scale = 1;
+	protected double scale = 1;	
 
 	public InnerComponent(BufferedImage image) {
 		this(image, 100);
@@ -142,10 +142,24 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 					continue;
 				}
 
-				x_cood = x * tileSize - anchor.x + screen_width / 2;
-				y_cood = y * tileSize - anchor.y + screen_height / 2;
+				x_cood = (int) (x * tileSize * scale - anchor.x + screen_width / 2);
+				y_cood = (int) (y * tileSize * scale - anchor.y + screen_height / 2);
+				
+				BufferedImage image = tiles[x][y];
+				int scaledTileSize = (int) (tileSize * scale);
 
-				g2d.drawImage(tiles[x][y], x_cood, y_cood, null);
+				if(scale != 1.0) {
+					BufferedImage tmp = new BufferedImage(scaledTileSize, scaledTileSize, image.getType());
+			        Graphics2D tmpG = tmp.createGraphics();
+			        //tmpG.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+			        tmpG.drawImage(image, 0, 0, scaledTileSize, scaledTileSize, null);
+			        tmpG.dispose();
+			        
+			        image.flush();
+			        image = tmp;
+				}
+				
+				g2d.drawImage(image, x_cood, y_cood, null);
 			}
 		}
 		super.paintComponent(g);
@@ -173,6 +187,7 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent event) {
-		int steps = event.getWheelRotation();
+		scale += 0.5 * event.getWheelRotation();
+		repaint();
 	}
 }
