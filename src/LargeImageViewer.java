@@ -167,21 +167,21 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 				y_cood = (int) (y * tileSize * scale - anchor.y * scale + screen_height / 2);
 				
 				BufferedImage image = tiles[x][y];
-				int scaledTileSize = (int) (tileSize * scale);
+				int scaledTileSize = (int) (tileSize * scale) + 1;
 
 				if(scale != 1.0) {
 					BufferedImage cachedImage = cache[x][y];
 					if(cachedImage != null) {
 						image = cachedImage;
 					} else {
-						/*BufferedImage tmp = new BufferedImage(scaledTileSize, scaledTileSize, image.getType());
+						BufferedImage tmp = new BufferedImage(scaledTileSize, scaledTileSize, image.getType());
 				        Graphics2D tmpG = tmp.createGraphics();
-				        //tmpG.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-				        tmpG.drawImage(image, 0, 0, scaledTileSize + 1, scaledTileSize + 1, null);
+				        tmpG.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+				        tmpG.drawImage(image, 0, 0, scaledTileSize, scaledTileSize, null);
 				        tmpG.dispose();
-				        image = tmp;*/
+				        image = tmp;
 				        
-						image = Scalr.resize(image, Method.QUALITY, scaledTileSize + 1, scaledTileSize + 1);
+						//image = Scalr.resize(image, Method.ULTRA, scaledTileSize, scaledTileSize);
 						cache[x][y] = image;
 					}
 				}
