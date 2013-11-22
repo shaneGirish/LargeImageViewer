@@ -15,6 +15,9 @@ import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 
+import org.imgscalr.Scalr;
+import org.imgscalr.Scalr.Method;
+
 @SuppressWarnings("serial")
 public class LargeImageViewer extends JFrame {
 	protected JComponent component;
@@ -171,14 +174,15 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 					if(cachedImage != null) {
 						image = cachedImage;
 					} else {
-						BufferedImage tmp = new BufferedImage(scaledTileSize, scaledTileSize, image.getType());
+						/*BufferedImage tmp = new BufferedImage(scaledTileSize, scaledTileSize, image.getType());
 				        Graphics2D tmpG = tmp.createGraphics();
-				        tmpG.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-				        tmpG.drawImage(image, 0, 0, scaledTileSize, scaledTileSize, null);
+				        //tmpG.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+				        tmpG.drawImage(image, 0, 0, scaledTileSize + 1, scaledTileSize + 1, null);
 				        tmpG.dispose();
+				        image = tmp;*/
 				        
-				        image = tmp;
-				        cache[x][y] = tmp;
+						image = Scalr.resize(image, Method.QUALITY, scaledTileSize + 1, scaledTileSize + 1);
+						cache[x][y] = image;
 					}
 				}
 				
@@ -210,8 +214,10 @@ class InnerComponent extends JComponent implements MouseListener, MouseMotionLis
 
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent event) {
-		scale *= Math.pow(2.0, -event.getWheelRotation());
-		//scale -= event.getWheelRotation() * 0.075;
+		//scale *= Math.pow(2.0, -event.getWheelRotation());
+		scale -= event.getWheelRotation() * 0.075;
+		scale = Math.max(scale, 0.075);
+		scale = Math.min(scale, 3);
 		cleanCache();
 		repaint();
 	}
