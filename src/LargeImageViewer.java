@@ -15,7 +15,7 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 
 @SuppressWarnings("serial")
-class LargeImageViewer extends JComponent implements MouseListener, MouseMotionListener, MouseWheelListener {
+class LargeImageViewer extends JComponent implements MouseListener, MouseMotionListener, MouseWheelListener, TileResizeListener {
 	public static void main(String[] args) {
 		try {
 			JFrame window = new JFrame();
@@ -137,12 +137,12 @@ class LargeImageViewer extends JComponent implements MouseListener, MouseMotionL
 				tile = image.tiles[x][y];
 				
 				BufferedImage scaledImage = tile.getScaledTile(scale);
+				x_cood = (int) (position.x * scale - image.anchor.x * scale + width / 2);
+				y_cood = (int) (position.y * scale - image.anchor.y * scale + height / 2);
 				if(scaledImage != null) {
-					x_cood = (int) (position.x * scale - image.anchor.x * scale + width / 2);
-					y_cood = (int) (position.y * scale - image.anchor.y * scale + height / 2);
 					g2d.drawImage(scaledImage, x_cood, y_cood, null);
-					g2d.drawRect(x_cood, y_cood, scaledImage.getWidth(), scaledImage.getHeight());
 				}
+				g2d.drawRect(x_cood, y_cood, scaledImage.getWidth(), scaledImage.getHeight());
 			}
 		}
 	}
@@ -181,7 +181,7 @@ class LargeImageViewer extends JComponent implements MouseListener, MouseMotionL
 	@Override public void mouseWheelMoved(MouseWheelEvent event) {
 		scale -= event.getWheelRotation() * 0.075;
 		scale = Math.max(scale, 0.075);
-		scale = Math.min(scale, 3);
+		scale = Math.min(scale, 3);		
 		repaint();
 	}
 	
@@ -190,4 +190,8 @@ class LargeImageViewer extends JComponent implements MouseListener, MouseMotionL
 	@Override public void mouseClicked(MouseEvent event) {}
 	@Override public void mouseEntered(MouseEvent event) {}
 	@Override public void mouseReleased(MouseEvent event) {}
+
+	@Override public void tileResized() {
+		repaint();
+	}
 }
