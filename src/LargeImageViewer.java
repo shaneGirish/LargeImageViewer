@@ -1,224 +1,193 @@
-import java.io.File;
-import java.io.IOException;
-import java.awt.Point;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 
-import org.imgscalr.Scalr;
-import org.imgscalr.Scalr.Method;
-
 @SuppressWarnings("serial")
-public class LargeImageViewer extends JFrame {
-	protected JComponent component;
-
-	public LargeImageViewer(String url) throws IOException {
-		BufferedImage image = ImageIO.read(new File(url));
-
-		component = new InnerComponent(image);
-		this.add(component);
-		this.setSize(800, 600);
-		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-		this.setVisible(true);
-	}
-
+class LargeImageViewer extends JComponent implements MouseListener, MouseMotionListener, MouseWheelListener {
 	public static void main(String[] args) {
 		try {
-			new LargeImageViewer("Edinburgh.jpg");
+			JFrame window = new JFrame();
+			window.add(new LargeImageViewer("Edinburgh.jpg"));
+			window.setSize(800, 600);
+			window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			window.setVisible(true);
+			window.repaint();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-}
-
-@SuppressWarnings("serial")
-class InnerComponent extends JComponent implements MouseListener, MouseMotionListener, MouseWheelListener {
-	protected BufferedImage[][] tiles, cache;
-
-	protected final int tileSize;
-
-	protected int width, height, rows, cols;
-
-	protected Point anchor, dragStart;
-
+	
+	protected LargeImage image;
+	
+	protected Point dragStart;
 	protected double scale = 1;
 
-	public InnerComponent(BufferedImage image) {
-		this(image, 100);
-	}
-
-	public InnerComponent(BufferedImage image, int tileSize) {
-		if (tileSize < 50) {
-			throw new IllegalArgumentException("Specified tile size is not valid.");
-		} else {
-			this.tileSize = tileSize;
-		}
-		calculateTiles(padImage(image));
+	public LargeImageViewer(String url) throws IOException {
+		image = new LargeImage(ImageIO.read(new File(url)));
+		image.anchor = new Point(image.width/2, image.height/2);
+		
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
-	}
-
-	protected BufferedImage padImage(BufferedImage image) {
-		int old_width = image.getWidth();
-		int old_height = image.getHeight();
-
-		width = old_width + tileSize - old_width % tileSize;
-		height = old_height + tileSize - old_height % tileSize;
-
-		anchor = new Point(width / 2, height / 2);
-
-		BufferedImage paddedImage = new BufferedImage(width, height, image.getType());
-		Graphics2D graphics = (Graphics2D) paddedImage.getGraphics();
-		graphics.drawImage(image, 0, 0, old_width, old_height, null);
-		graphics.dispose();
-
-		image.flush();
-		image = null;
-
-		return paddedImage;
+		
+		repaint();
 	}
 	
-	protected void cleanCache() {
-		if(cache != null) {
-			int i,j;
-			for (i = 0 ; i < cols ; i++) {
-				for (j = 0 ; j < rows ; j++) {
-					BufferedImage image = cache[i][j];
-					if(image != null) {
-						image.flush();
-					}
+	private Point getLowLimit(int width, int height) {
+		return new Point(image.anchor.x - (int) Math.ceil(width/2.0), image.anchor.y - (int) Math.ceil(height/2.0));
+	}
+	
+	private Point getHighLimit(int width, int height) {
+		return new Point(image.anchor.x + (int) Math.ceil(width/2.0), image.anchor.y + (int) Math.ceil(height/2.0));
+	}
+	
+	private Point getStartTile(Point low_limit) {
+		Point result = new Point();
+		
+		Tile tile;
+		Point position;
+		int x, y;
+		
+		for (x = 0; x < image.cols; x++) {
+			position = image.tilePos[x][0];
+			tile = image.tiles[x][0];
+			
+			if((position.x + tile.width) > low_limit.x) {
+				result.x = x;
+				break;
+			}
+		}
+		
+		for (y = 0; y < image.rows; y++) {
+			position = image.tilePos[0][y];
+			tile = image.tiles[0][y];
+
+			if((position.y + tile.height) > low_limit.y) {
+				result.y = y;
+				break;
+			}
+		}
+		
+		return result;
+	}
+	
+	private Point getEndTile(Point high_limit) {
+		Point result = new Point();
+		
+		Point position;
+		int x, y;
+
+		for (x = image.cols - 1; x >= 0; --x) {
+			position = image.tilePos[x][0];
+			
+			if(position.x <= high_limit.x) {
+				result.x = x + 1;
+				break;
+			}
+		}
+		
+		for (y = image.rows - 1; y >= 0 ; --y) {
+			position = image.tilePos[0][y];
+
+			if(position.y <= high_limit.y) {
+				result.y = y + 1;
+				break;
+			}
+		}
+		
+		return result;
+	}
+	
+	@Override public void paintComponent(Graphics g) {
+		Graphics2D g2d = (Graphics2D) g;
+
+		int width = this.getWidth();
+		int height = this.getHeight();
+		
+		checkAnchor(width, height);
+		
+		int shown_width = (int) Math.ceil(width * scale);
+		int shown_height = (int) Math.ceil(height * scale);
+		
+		Point low_limit = getLowLimit(shown_width, shown_height);
+		Point high_limit = getHighLimit(shown_width, shown_height);
+		
+		Point start_tile = getStartTile(low_limit);
+		Point end_tile = getEndTile(high_limit);
+		
+		Tile tile;
+		Point position;
+		int x, y, x_cood, y_cood;
+		
+		for (x = start_tile.x; x < end_tile.x; x++) {
+			for (y = start_tile.y; y < end_tile.y; y++) {
+				position = image.tilePos[x][y];
+				tile = image.tiles[x][y];
+				
+				BufferedImage scaledImage = tile.getScaledTile(scale);
+				if(scaledImage != null) {
+					x_cood = (int) (position.x * scale - image.anchor.x * scale + width / 2);
+					y_cood = (int) (position.y * scale - image.anchor.y * scale + height / 2);
+					g2d.drawImage(scaledImage, x_cood, y_cood, null);
+					g2d.drawRect(x_cood, y_cood, scaledImage.getWidth(), scaledImage.getHeight());
 				}
 			}
 		}
-		cache = new BufferedImage[cols][rows];
 	}
-
-	protected void calculateTiles(BufferedImage image) {
-		rows = height / tileSize;
-		cols = width / tileSize;
-		tiles = new BufferedImage[cols][rows];
-		cleanCache();
-
-		for (int x = 0; x < cols; x++) {
-			for (int y = 0; y < rows; y++) {
-				tiles[x][y] = image.getSubimage(tileSize * x, tileSize * y, tileSize, tileSize);
-				
-			}
-		}
-	}
-
+	
 	protected void checkAnchor(int screen_width, int screen_height) {
-		int max_anchor_x = (int) (width - screen_width / scale / 2);
-		int max_anchor_y = (int) (height - screen_height / scale / 2);
+		int max_anchor_x = (int) (image.width - screen_width / scale / 2);
+		int max_anchor_y = (int) (image.height - screen_height / scale / 2);
 		int min_anchor_x = (int) (screen_width / scale / 2);
 		int min_anchor_y = (int) (screen_height / scale / 2);
 
-		if (anchor.x > max_anchor_x) {
-			anchor.x = max_anchor_x;
-		} else if (anchor.x < min_anchor_x) {
-			anchor.x = min_anchor_x;
+		if (image.anchor.x > max_anchor_x) {
+			image.anchor.x = max_anchor_x;
+		} else if (image.anchor.x < min_anchor_x) {
+			image.anchor.x = min_anchor_x;
 		}
 
-		if (anchor.y > max_anchor_y) {
-			anchor.y = max_anchor_y;
-		} else if (anchor.y < min_anchor_y) {
-			anchor.y = min_anchor_y;
+		if (image.anchor.y > max_anchor_y) {
+			image.anchor.y = max_anchor_y;
+		} else if (image.anchor.y < min_anchor_y) {
+			image.anchor.y = min_anchor_y;
 		}
 	}
-
-	@Override
-	public void paintComponent(Graphics g) {
-		Graphics2D g2d = (Graphics2D) g;
-
-		int screen_width = this.getWidth();
-		int screen_height = this.getHeight();
-
-		checkAnchor(screen_width, screen_height);
-
-		int rows_on_screen = (int) Math.ceil(screen_width / (tileSize * scale)) + 1;
-		int cols_on_screen = (int) Math.ceil(screen_height / (tileSize * scale)) + 1;
-
-		int first_tile_index_x = (int) Math.floor(((anchor.x*scale) - screen_width / 2) / (tileSize*scale));
-		int first_tile_index_y = (int) Math.floor(((anchor.y*scale) - screen_height / 2) / (tileSize*scale));
-
-		int last_tile_index_x = first_tile_index_x + rows_on_screen;
-		int last_tile_index_y = first_tile_index_y + cols_on_screen;
-
-		int x, y, x_cood, y_cood;
-
-		for (x = first_tile_index_x; x < last_tile_index_x; x++) {
-			for (y = first_tile_index_y; y < last_tile_index_y; y++) {
-				if (x >= cols || y >= rows || x < 0 || y < 0) {
-					continue;
-				}
-
-				x_cood = (int) (x * tileSize * scale - anchor.x * scale + screen_width / 2);
-				y_cood = (int) (y * tileSize * scale - anchor.y * scale + screen_height / 2);
-				
-				BufferedImage image = tiles[x][y];
-				int scaledTileSize = (int) (tileSize * scale) + 1;
-
-				if(scale != 1.0) {
-					BufferedImage cachedImage = cache[x][y];
-					if(cachedImage != null) {
-						image = cachedImage;
-					} else {
-						BufferedImage tmp = new BufferedImage(scaledTileSize, scaledTileSize, image.getType());
-				        Graphics2D tmpG = tmp.createGraphics();
-				        tmpG.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-				        tmpG.drawImage(image, 0, 0, scaledTileSize, scaledTileSize, null);
-				        tmpG.dispose();
-				        image = tmp;
-				        
-						//image = Scalr.resize(image, Method.ULTRA, scaledTileSize, scaledTileSize);
-						cache[x][y] = image;
-					}
-				}
-				
-				g2d.drawImage(image, x_cood, y_cood, null);
-			}
-		}
-		super.paintComponent(g);
+	
+	@Override public void mousePressed(MouseEvent event) {
+		dragStart = event.getPoint();
 	}
 
+	@Override public void mouseDragged(MouseEvent event) {
+		Point dragEnd = event.getPoint();
+		image.anchor.x -= (dragEnd.x - dragStart.x) / scale;
+		image.anchor.y -= (dragEnd.y - dragStart.y) / scale;
+		dragStart = dragEnd;
+		repaint();
+	}
+
+	@Override public void mouseWheelMoved(MouseWheelEvent event) {
+		scale -= event.getWheelRotation() * 0.075;
+		scale = Math.max(scale, 0.075);
+		scale = Math.min(scale, 3);
+		repaint();
+	}
+	
 	@Override public void mouseMoved(MouseEvent event) {}
 	@Override public void mouseExited(MouseEvent event) {}
 	@Override public void mouseClicked(MouseEvent event) {}
 	@Override public void mouseEntered(MouseEvent event) {}
 	@Override public void mouseReleased(MouseEvent event) {}
-
-	@Override
-	public void mousePressed(MouseEvent event) {
-		dragStart = event.getPoint();
-	}
-
-	@Override
-	public void mouseDragged(MouseEvent event) {
-		Point dragEnd = event.getPoint();
-		anchor.x -= (dragEnd.x - dragStart.x) / scale;
-		anchor.y -= (dragEnd.y - dragStart.y) / scale;
-		dragStart = dragEnd;
-		repaint();
-	}
-
-	@Override
-	public void mouseWheelMoved(MouseWheelEvent event) {
-		//scale *= Math.pow(2.0, -event.getWheelRotation());
-		scale -= event.getWheelRotation() * 0.075;
-		scale = Math.max(scale, 0.075);
-		scale = Math.min(scale, 3);
-		cleanCache();
-		repaint();
-	}
 }
