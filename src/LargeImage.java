@@ -21,6 +21,22 @@ public class LargeImage {
 		calculateTiles(image, tileSize);
 	}
 	
+	public void addTileResizeListener(TileResizeListener listener) {
+		for (Tile[] tmp : tiles) {
+			for (Tile tile : tmp) {
+				tile.listeners.add(listener);
+			}
+		}
+	}
+	
+	public void removeTileResizeListener(TileResizeListener listener) {
+		for (Tile[] tmp : tiles) {
+			for (Tile tile : tmp) {
+				tile.listeners.remove(listener);
+			}
+		}
+	}
+	
 	protected void calculateTiles(BufferedImage image, double tileSize) {
 		rows = (int) Math.round(height / tileSize);
 		cols = (int) Math.round(width / tileSize);
@@ -52,7 +68,7 @@ public class LargeImage {
 				
 				tile = image.getSubimage(x_pos, y_pos, w, h);
 				
-				tiles[x][y] = new Tile(tile);
+				tiles[x][y] = new Tile(x, y, tile);
 			}
 		}
 		
