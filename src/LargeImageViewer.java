@@ -19,7 +19,7 @@ class LargeImageViewer extends JComponent implements MouseListener, MouseMotionL
 	public static void main(String[] args) {
 		try {
 			JFrame window = new JFrame();
-			window.add(new LargeImageViewer("Edinburgh.jpg"));
+			window.add(new LargeImageViewer("wallpaper.jpg"));
 			window.setSize(800, 600);
 			window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			window.setVisible(true);
@@ -38,6 +38,8 @@ class LargeImageViewer extends JComponent implements MouseListener, MouseMotionL
 		image = new LargeImage(ImageIO.read(new File(url)));
 		image.anchor = new Point(image.width/2, image.height/2);
 		
+		image.addTileResizeListener(this);
+		
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		addMouseWheelListener(this);
@@ -46,16 +48,14 @@ class LargeImageViewer extends JComponent implements MouseListener, MouseMotionL
 	}
 	
 	private Point getLowLimit(int width, int height) {
-		return new Point(image.anchor.x - (int) Math.ceil(width/2.0), image.anchor.y - (int) Math.ceil(height/2.0));
+		return new Point((int) Math.floor(image.anchor.x - width/scale/2.0), (int) Math.floor(image.anchor.y - height/scale/2.0));
 	}
 	
 	private Point getHighLimit(int width, int height) {
-		return new Point(image.anchor.x + (int) Math.ceil(width/2.0), image.anchor.y + (int) Math.ceil(height/2.0));
+		return new Point((int) Math.ceil(image.anchor.x + width/scale/2.0), (int) Math.ceil(image.anchor.y + height/scale/2.0));
 	}
 	
 	private Point getStartTile(Point low_limit) {
-		Point result = new Point();
-		
 		Tile tile;
 		Point position;
 		int x, y;
@@ -65,7 +65,6 @@ class LargeImageViewer extends JComponent implements MouseListener, MouseMotionL
 			tile = image.tiles[x][0];
 			
 			if((position.x + tile.width) > low_limit.x) {
-				result.x = x;
 				break;
 			}
 		}
@@ -75,17 +74,14 @@ class LargeImageViewer extends JComponent implements MouseListener, MouseMotionL
 			tile = image.tiles[0][y];
 
 			if((position.y + tile.height) > low_limit.y) {
-				result.y = y;
 				break;
 			}
 		}
 		
-		return result;
+		return new Point(x, y);
 	}
 	
 	private Point getEndTile(Point high_limit) {
-		Point result = new Point();
-		
 		Point position;
 		int x, y;
 
@@ -93,7 +89,6 @@ class LargeImageViewer extends JComponent implements MouseListener, MouseMotionL
 			position = image.tilePos[x][0];
 			
 			if(position.x <= high_limit.x) {
-				result.x = x + 1;
 				break;
 			}
 		}
@@ -102,12 +97,11 @@ class LargeImageViewer extends JComponent implements MouseListener, MouseMotionL
 			position = image.tilePos[0][y];
 
 			if(position.y <= high_limit.y) {
-				result.y = y + 1;
 				break;
 			}
 		}
 		
-		return result;
+		return new Point(x, y);
 	}
 	
 	@Override public void paintComponent(Graphics g) {
@@ -118,32 +112,33 @@ class LargeImageViewer extends JComponent implements MouseListener, MouseMotionL
 		
 		checkAnchor(width, height);
 		
-		int shown_width = (int) Math.ceil(width * scale);
-		int shown_height = (int) Math.ceil(height * scale);
-		
-		Point low_limit = getLowLimit(shown_width, shown_height);
-		Point high_limit = getHighLimit(shown_width, shown_height);
+		Point low_limit = getLowLimit(width, height);
+		Point high_limit = getHighLimit(width, height);
 		
 		Point start_tile = getStartTile(low_limit);
 		Point end_tile = getEndTile(high_limit);
 		
-		Tile tile;
-		Point position;
-		int x, y, x_cood, y_cood;
+		Tile tile = image.tiles[start_tile.x][start_tile.y];
+		Point position = image.tilePos[start_tile.x][start_tile.y];
+		int x_cood = (int) ((position.x - image.anchor.x)*scale + width / 2);
+		int y_cood = (int) ((position.y - image.anchor.y)*scale + height / 2);
+		int y_cood_bckp = y_cood;
+		BufferedImage scaledTile = null;
+		int x, y;
 		
-		for (x = start_tile.x; x < end_tile.x; x++) {
-			for (y = start_tile.y; y < end_tile.y; y++) {
+		for (x = start_tile.x; x <= end_tile.x; x++) {
+			for (y = start_tile.y; y <= end_tile.y; y++) {
 				position = image.tilePos[x][y];
 				tile = image.tiles[x][y];
 				
-				BufferedImage scaledImage = tile.getScaledTile(scale);
-				x_cood = (int) (position.x * scale - image.anchor.x * scale + width / 2);
-				y_cood = (int) (position.y * scale - image.anchor.y * scale + height / 2);
-				if(scaledImage != null) {
-					g2d.drawImage(scaledImage, x_cood, y_cood, null);
-				}
-				g2d.drawRect(x_cood, y_cood, scaledImage.getWidth(), scaledImage.getHeight());
+				scaledTile = tile.getScaledTile(scale);
+				g2d.drawImage(scaledTile, x_cood, y_cood, null);
+				//g2d.drawRect(x_cood, y_cood, scaledTile.getWidth(), scaledTile.getHeight());
+				
+				y_cood += scaledTile.getHeight();
 			}
+			x_cood += scaledTile.getWidth();
+			y_cood = y_cood_bckp;
 		}
 	}
 	
@@ -181,7 +176,7 @@ class LargeImageViewer extends JComponent implements MouseListener, MouseMotionL
 	@Override public void mouseWheelMoved(MouseWheelEvent event) {
 		scale -= event.getWheelRotation() * 0.075;
 		scale = Math.max(scale, 0.075);
-		scale = Math.min(scale, 3);		
+		scale = Math.min(scale, 3);
 		repaint();
 	}
 	
@@ -191,7 +186,7 @@ class LargeImageViewer extends JComponent implements MouseListener, MouseMotionL
 	@Override public void mouseEntered(MouseEvent event) {}
 	@Override public void mouseReleased(MouseEvent event) {}
 
-	@Override public void tileResized() {
+	@Override public void tileResized(Tile tile, double scale) {
 		repaint();
 	}
 }
