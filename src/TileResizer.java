@@ -5,8 +5,6 @@ import java.util.concurrent.Future;
 public class TileResizer {
 	protected final static ArrayList<TileResizeJob> queue;
 	
-	protected final static ArrayList<TileResizeListener> listeners;
-	
 	public static TileResizeJob add(TileResizeJob job) {
 		synchronized(queue) {
 			queue.add(job);
@@ -36,7 +34,6 @@ public class TileResizer {
 	
 	static {
 		queue = new ArrayList<TileResizeJob>();
-		listeners = new ArrayList<TileResizeListener>();
 		
 		int cores = Runtime.getRuntime().availableProcessors();
 		
@@ -47,14 +44,11 @@ public class TileResizer {
 						TileResizeJob job = null;
 						synchronized(queue) {
 							if(!queue.isEmpty()) {
-								job = queue.remove(0);
+								job = queue.remove(queue.size() - 1);
 							}
 						}
 						if(job != null) {
 							job.complete();
-							for (TileResizeListener listener : listeners) {
-								listener.tileResized();
-							}
 						}
 					}
 				}
