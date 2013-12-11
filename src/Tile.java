@@ -1,42 +1,30 @@
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
 
-import org.imgscalr.AsyncScalr;
 import org.imgscalr.Scalr;
 import org.imgscalr.Scalr.Method;
 
 public class Tile {
 	protected final Tile self;
-	protected final int x, y;
 	protected final int width, height;
 	protected final BufferedImage data;
-	protected final ConcurrentHashMap<Integer, BufferedImage> cache = new ConcurrentHashMap<Integer, BufferedImage>();
-	protected final ConcurrentHashMap<Integer, Integer> reqCounts = new ConcurrentHashMap<Integer, Integer>();
-
+	protected final Point position;
+	
 	protected final ArrayList<TileResizeListener> listeners = new ArrayList<TileResizeListener>();
 	
-	public Tile(int x, int y, BufferedImage data) {
+	public Tile(Point position, BufferedImage data) {
 		this.self = this;
-		this.x = x;
-		this.y = y;
 		this.width = data.getWidth();
 		this.height = data.getHeight();
+		this.position = position;
 		this.data = data;
-		cache.put(getKey(1.0), this.data);
-	}
-	
-	private Integer getKey(double scale) {
-		return (int) Math.floor(scale * 1000);		
+		TileCacheStore.put(1.0, this, this.data);
 	}
 	
 	public BufferedImage getScaledTile(final double scale) {
-		final Integer key = getKey(scale);
-		
-		reqCounts.putIfAbsent(key, 1);
-		reqCounts.put(key, reqCounts.get(key) + 1);
-		
-		if(!cache.containsKey(key)) {
+		BufferedImage scaledTile = TileCacheStore.get(scale, this);
+		if(scaledTile == null) {
 			int newWidth = (int) (width * scale);
 			int newHeight = (int) (height * scale);
 			/*TileResizer.add(
@@ -53,11 +41,38 @@ public class Tile {
 			);
 			return Scalr.resize(data, Method.SPEED, newWidth, newHeight);
 			*/
-			BufferedImage result = Scalr.resize(data, Method.QUALITY, newWidth, newHeight);
-			cache.put(key, result);
-			return result;
+			scaledTile = Scalr.resize(data, Method.QUALITY, newWidth, newHeight);
+			TileCacheStore.put(scale, this, scaledTile);
 		}
 			
-		return cache.get(key);
+		return scaledTile;
+	}
+
+	/*@Override public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + height;
+		result = prime * result + ((position == null) ? 0 : position.hashCode());
+		result = prime * result + width;
+		return result;
+	}*/
+
+	@Override public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof Tile))
+			return false;
+		
+		Tile other = (Tile) obj;
+		if (height != other.height)
+			return false;
+		if (!position.equals(other.position))
+			return false;
+		if (width != other.width)
+			return false;
+		
+		return true;
 	}
 }

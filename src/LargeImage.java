@@ -3,9 +3,7 @@ import java.awt.image.BufferedImage;
 
 public class LargeImage {
 	protected Tile[][] tiles;
-	protected Point[][] tilePos;
 	protected int width, height, rows, cols;
-	protected Point anchor, dragStart;
 	
 	public LargeImage(BufferedImage image) {
 		this(image, 100);
@@ -48,7 +46,6 @@ public class LargeImage {
 		BufferedImage tile;
 		
 		tiles = new Tile[cols][rows];
-		tilePos = new Point[cols][rows];
 
 		for (x = 0; x < cols; x++) {
 			for (y = 0; y < rows; y++) {
@@ -68,20 +65,8 @@ public class LargeImage {
 				
 				tile = image.getSubimage(x_pos, y_pos, w, h);
 				
-				tiles[x][y] = new Tile(x, y, tile);
+				tiles[x][y] = new Tile(new Point(x_pos, y_pos), tile);
 			}
-		}
-		
-		x_pos = 0;
-		y_pos = 0;
-		
-		for (x = 0; x < cols; x++) {
-			for (y = 0; y < rows; y++) {
-				tilePos[x][y] = new Point(x_pos, y_pos);
-				y_pos += tiles[x][y].height;
-			}
-			x_pos += tiles[x][y-1].width;
-			y_pos = 0;
 		}
 	}
 }
