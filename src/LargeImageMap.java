@@ -8,8 +8,8 @@ public class LargeImageMap {
 	public final Dimension bounds;
 	
 	public LargeImageMap(LargeImage image, double scale) {
-		positions = new Point[image.rows][image.cols];
-		dimensions = new Dimension[image.rows][image.cols];
+		positions = new Point[image.cols][image.rows];
+		dimensions = new Dimension[image.cols][image.rows];
 
 		Tile[][] tiles = image.tiles;
 		
