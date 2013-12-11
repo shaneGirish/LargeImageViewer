@@ -6,15 +6,11 @@ public class ScaledTileCacheKey {
 		this.scale = scale;
 		this.tile = tile;
 	}
-	
-	private Integer getKey(double scale) {
-		return (int) Math.floor(scale * 1000);		
-	}
 
 	@Override public int hashCode() {
 		final int prime = 53;
 		int result = 1;
-		result = prime * result + ((scale == null) ? 0 : getKey(scale));
+		result = prime * result + ((scale == null) ? 0 : DoubleKey.getKey(scale));
 		result = prime * result + ((tile == null) ? 0 : tile.hashCode());
 		return result;
 	}
@@ -28,7 +24,7 @@ public class ScaledTileCacheKey {
 			return false;
 		
 		ScaledTileCacheKey other = (ScaledTileCacheKey) obj;
-		if (!getKey(scale).equals(getKey(other.scale)))
+		if (!DoubleKey.getKey(scale).equals(DoubleKey.getKey(other.scale)))
 			return false;
 		if (!tile.equals(other.tile))
 			return false;

@@ -22,7 +22,7 @@ public class Tile {
 		TileCacheStore.put(1.0, this, this.data);
 	}
 	
-	public BufferedImage getScaledTile(final double scale) {
+	public BufferedImage getScaledTile(double scale) {
 		BufferedImage scaledTile = TileCacheStore.get(scale, this);
 		if(scaledTile == null) {
 			int newWidth = (int) (width * scale);

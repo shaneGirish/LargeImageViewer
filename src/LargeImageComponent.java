@@ -61,20 +61,25 @@ class LargeImageComponent extends JComponent implements MouseListener, MouseMoti
 		
 		Point anchor = getViewPosition();
 		
+		LargeImageMap map = image.getScaledMap(scale);
+		
 		Tile tile;
 		Point position;
+		Dimension dimension;
 		BufferedImage scaledTile;
 		boolean inX, inY;
 		
 		for (int x = 0; x < image.cols ; x++) {
 			for (int y = 0; y < image.rows ; y++) {
 				tile = image.tiles[x][y];
-				position = tile.position;
+				dimension = map.dimensions[x][y];
+				position = map.positions[x][y];
 				
-				inX = position.x + tile.width > anchor.x && position.x < anchor.x + width;
-				inY = position.y + tile.height > anchor.y && position.y < anchor.y + height;
+				inX = position.x + dimension.width > anchor.x && position.x < anchor.x + width;
+				inY = position.y + dimension.height > anchor.y && position.y < anchor.y + height;
 				
 				if(inX && inY) {
+					//scaledTile = tile.getScaledTile(scale, dimension);
 					scaledTile = tile.getScaledTile(scale);
 					g2d.drawImage(scaledTile, position.x, position.y, null);
 					g2d.drawRect(position.x, position.y, scaledTile.getWidth(), scaledTile.getHeight());
@@ -110,8 +115,18 @@ class LargeImageComponent extends JComponent implements MouseListener, MouseMoti
 
 	@Override public void mouseWheelMoved(MouseWheelEvent event) {
 		scale -= event.getWheelRotation() * 0.075;
-		scale = Math.max(scale, 0.075);
+		scale = Math.max(scale, 0.1);
 		scale = Math.min(scale, 3);
+		
+		LargeImageMap map = image.getScaledMap(scale);
+		
+		setMinimumSize(map.bounds);
+	    setPreferredSize(map.bounds);
+	    setSize(map.bounds);
+	    
+	    //getParent().getParent().validate();
+	    
+		//revalidate();
 		repaint();
 	}
 	
