@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TileCacheStore {
-	public static int MAX_MEMORY = 100;	
+	public static final int MAX_MEMORY = 100000;
 	protected static int LIFE = 0;
 	protected static int SIZE = 0;
 	protected static HashMap<ScaledTileCacheKey, ScaledTileCacheValue> cache = new HashMap<ScaledTileCacheKey, ScaledTileCacheValue>();
@@ -38,16 +38,29 @@ public class TileCacheStore {
 	
 	private static Comparator<Map.Entry<ScaledTileCacheKey, ScaledTileCacheValue>> comparator = new Comparator<Map.Entry<ScaledTileCacheKey, ScaledTileCacheValue>>() {
 		@Override public int compare(Map.Entry<ScaledTileCacheKey, ScaledTileCacheValue> o1, Map.Entry<ScaledTileCacheKey, ScaledTileCacheValue> o2) {
-			return o1.getValue().getAdjustedCount() - o2.getValue().getAdjustedCount();
+			return o2.getValue().getAdjustedCount() - o1.getValue().getAdjustedCount();
 		}
     };
 	
 	public static void trim() {
-		ArrayList<Map.Entry<ScaledTileCacheKey,ScaledTileCacheValue>> sorted_list = new ArrayList<Map.Entry<ScaledTileCacheKey,ScaledTileCacheValue>>(cache.entrySet());
-	    Collections.sort(sorted_list, comparator);
-	    
-	    for (int i = 0; i < sorted_list.size(); i++) {
-	    	//
+		if(SIZE > MAX_MEMORY) {
+			ArrayList<Map.Entry<ScaledTileCacheKey,ScaledTileCacheValue>> sorted_list = new ArrayList<Map.Entry<ScaledTileCacheKey,ScaledTileCacheValue>>(cache.entrySet());
+		    Collections.sort(sorted_list, comparator);
+		    
+		    for (int i = 0; i < sorted_list.size(); i++) {
+		    	Map.Entry<ScaledTileCacheKey,ScaledTileCacheValue> entry = sorted_list.get(i);
+		    	ScaledTileCacheValue tileCache = entry.getValue();
+		    	
+		    	cache.remove(entry.getKey());
+		    	SIZE -= tileCache.getSize();
+		    	
+		    	tileCache.image.flush();
+		    	tileCache.image = null;
+		    	
+		    	if(SIZE > 0.75 * MAX_MEMORY) {
+		    		break;
+		    	}
+			}
 		}
 	}
 }
