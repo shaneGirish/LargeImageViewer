@@ -6,12 +6,41 @@ public class LargeImageMap {
 	public final Dimension[][] dimensions;
 	public final Dimension bounds;
 	
+	private void fillWidth(LargeImage image, int difference) {
+		int x, y, i, diff;
+		
+		for(y = 0; y < image.rows; y++) {
+			i = 0;
+			diff = difference;
+			while(diff > 0) {
+				++dimensions[i][y].width;
+				for (x = ++i; x < image.cols; x++) {
+					++positions[x][y].x;
+				}
+				--diff;
+			}
+		}
+	}
+	
+	private void fillHeight(LargeImage image, int difference) {
+		int x, y, i, diff;
+		
+		for(x = 0; x < image.cols; x++) {
+			i = 0;
+			diff = difference;
+			while(diff > 0) {
+				++dimensions[x][i].height;
+				for (y = ++i; y < image.rows; y++) {
+					++positions[x][y].y;
+				}
+				--diff;
+			}
+		}
+	}
+	
 	public LargeImageMap(LargeImage image, double scale) {
 		positions = new Point[image.cols][image.rows];
 		dimensions = new Dimension[image.cols][image.rows];
-		
-		int w_diff = (int) (image.width * scale);
-		int h_diff = (int) (image.height * scale);
 
 		Tile[][] tiles = image.tiles;
 		
@@ -19,7 +48,7 @@ public class LargeImageMap {
 		int h = (int) (tiles[0][0].height * scale);
 		
 		int width = w, height = h;
-		int x, y, i;
+		int x, y;
 		
 		positions[0][0] = new Point();
 		dimensions[0][0] = new Dimension(w, h);
@@ -44,29 +73,6 @@ public class LargeImageMap {
 			dimensions[0][y] = new Dimension(w,h);
 		}
 		
-		w_diff -= width;
-		h_diff -= height;
-		
-		i = 0;
-		while(w_diff > 0) {
-			++dimensions[i][0].width;
-			for (x = ++i; x < image.cols; x++) {
-				++positions[x][0].x;
-			}
-			--w_diff;
-			++width;
-		}
-		
-		i = 0;
-		while(h_diff > 0) {
-			++dimensions[0][i].height;
-			for (y = ++i; y < image.rows; y++) {
-				++positions[0][y].y;
-			}
-			--h_diff;
-			++height;
-		}
-		
 		for (x = 1; x < image.cols; x++) {
 			for (y = 1; y < image.rows; y++) {				
 				positions[x][y] = new Point(
@@ -80,11 +86,17 @@ public class LargeImageMap {
 			}
 		}
 		
-		this.bounds = new Dimension(width, height);
+		w = (int) (image.width * scale);
+		h = (int) (image.height * scale);
 		
-		System.out.println(scale);
+		fillWidth(image, w - width);
+		fillHeight(image, h - height);
+		
+		this.bounds = new Dimension(w, h);
+
+		/*System.out.println(scale);
 		System.out.println(this.bounds);
 		System.out.println(new Dimension((int) (image.width * scale), (int) (image.height * scale)));
-		System.out.println();
+		System.out.println();*/
 	}
 }
