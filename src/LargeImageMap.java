@@ -67,11 +67,6 @@ public class LargeImageMap {
 			++height;
 		}
 		
-		for (y = 0; y < h_diff; y++) {
-			++positions[y+1][0].y;
-			++dimensions[y][0].height;
-		}
-		
 		for (x = 1; x < image.cols; x++) {
 			for (y = 1; y < image.rows; y++) {				
 				positions[x][y] = new Point(
