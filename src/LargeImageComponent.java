@@ -64,8 +64,7 @@ class LargeImageComponent extends JComponent implements MouseListener, MouseMoti
 	}
 	
 	@Override public void paintComponent(Graphics g) {
-		Graphics2D g2d = (Graphics2D) g;		
-		//g2d.clearRect(0, 0, getExtentSize().width, getExtentSize().height);
+		Graphics2D g2d = (Graphics2D) g;
 		
 		if(aboveTilingThreshold()) {
 			Dimension dimension = new Dimension(
@@ -103,7 +102,7 @@ class LargeImageComponent extends JComponent implements MouseListener, MouseMoti
 				if(inX && inY) {
 					scaledTile = tile.getScaledTile(dimension);
 					g2d.drawImage(scaledTile, position.x, position.y, null);
-					g2d.drawRect(position.x, position.y, scaledTile.getWidth(), scaledTile.getHeight());
+					//g2d.drawRect(position.x, position.y, scaledTile.getWidth(), scaledTile.getHeight());
 				}
 			}
 		}
@@ -135,16 +134,12 @@ class LargeImageComponent extends JComponent implements MouseListener, MouseMoti
 	
 	@Override public void setSize(Dimension d) {
 	    setPreferredSize(d);
-	    //setMinimumSize(d);
-	    //setMaximumSize(d);
 		super.setSize(d);
 	}
 
 	@Override public void mouseWheelMoved(MouseWheelEvent event) {
 		Double scaleRatio = scale;
 		scale -= event.getWheelRotation() * scaleIncrement;
-		
-		//scale = Math.round(scale*100)/100.0;
 		
 		scale = Math.max(scale, 0.1);
 		scale = Math.min(scale, 3.0);
