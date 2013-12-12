@@ -9,6 +9,9 @@ public class LargeImageMap {
 	public LargeImageMap(LargeImage image, double scale) {
 		positions = new Point[image.cols][image.rows];
 		dimensions = new Dimension[image.cols][image.rows];
+		
+		int w_diff = (int) (image.width * scale);
+		int h_diff = (int) (image.height * scale);
 
 		Tile[][] tiles = image.tiles;
 		
@@ -16,7 +19,7 @@ public class LargeImageMap {
 		int h = (int) (tiles[0][0].height * scale);
 		
 		int width = w, height = h;
-		int x,y;
+		int x, y, i;
 		
 		positions[0][0] = new Point();
 		dimensions[0][0] = new Dimension(w, h);
@@ -41,20 +44,52 @@ public class LargeImageMap {
 			dimensions[0][y] = new Dimension(w,h);
 		}
 		
+		w_diff -= width;
+		h_diff -= height;
+		
+		i = 0;
+		while(w_diff > 0) {
+			++dimensions[i][0].width;
+			for (x = ++i; x < image.cols; x++) {
+				++positions[x][0].x;
+			}
+			--w_diff;
+			++width;
+		}
+		
+		i = 0;
+		while(h_diff > 0) {
+			++dimensions[0][i].height;
+			for (y = ++i; y < image.rows; y++) {
+				++positions[0][y].y;
+			}
+			--h_diff;
+			++height;
+		}
+		
+		for (y = 0; y < h_diff; y++) {
+			++positions[y+1][0].y;
+			++dimensions[y][0].height;
+		}
 		
 		for (x = 1; x < image.cols; x++) {
-			for (y = 1; y < image.rows; y++) {
-				w = (int) (tiles[x][y].width * scale);
-				h = (int) (tiles[x][y].height * scale);
-				
+			for (y = 1; y < image.rows; y++) {				
 				positions[x][y] = new Point(
 					positions[x][y-1].x,
 					positions[x-1][y].y
 				);
-				dimensions[x][y] = new Dimension(w, h);
+				dimensions[x][y] = new Dimension(
+					dimensions[x-1][y].width,
+					dimensions[x][y-1].height
+				);
 			}
 		}
 		
 		this.bounds = new Dimension(width, height);
+		
+		System.out.println(scale);
+		System.out.println(this.bounds);
+		System.out.println(new Dimension((int) (image.width * scale), (int) (image.height * scale)));
+		System.out.println();
 	}
 }
