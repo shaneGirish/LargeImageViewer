@@ -6,6 +6,8 @@ public class LargeImage {
 	protected final Tile[][] tiles;
 	protected final int width, height, rows, cols;
 	
+	protected final Tile original;
+	
 	protected final HashMap<Integer, LargeImageMap> scaledMaps = new HashMap<Integer, LargeImageMap>();
 	
 	public LargeImage(BufferedImage image) {
@@ -16,6 +18,8 @@ public class LargeImage {
 		if (tileSize < 50) {
 			throw new IllegalArgumentException("Tile size has to be more than 50.");
 		}
+		
+		original = new Tile(null, image);
 		
 		width = image.getWidth();
 		height = image.getHeight();

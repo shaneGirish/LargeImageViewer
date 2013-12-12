@@ -2,6 +2,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -53,21 +54,40 @@ class LargeImageComponent extends JComponent implements MouseListener, MouseMoti
 		getParent().setViewPosition(point);
 	}
 	
+	private boolean aboveTilingThreshold() {
+		double extentArea = getExtentSize().getWidth() * getExtentSize().getHeight();
+		double imageArea = image.width * image.height * scale * scale;
+		
+		return extentArea / imageArea > 0.5;
+	}
+	
 	@Override public void paintComponent(Graphics g) {
-		Graphics2D g2d = (Graphics2D) g;
-
-		double width = getExtentSize().getWidth();
-		double height = getExtentSize().getHeight();
+		Graphics2D g2d = (Graphics2D) g;		
+		//g2d.clearRect(0, 0, getExtentSize().width, getExtentSize().height);
 		
-		Point anchor = getViewPosition();
-		
-		LargeImageMap map = image.getScaledMap(scale);
-		
+		if(aboveTilingThreshold()) {
+			Dimension dimension = new Dimension(
+				(int) (image.width * scale),
+				(int) (image.height * scale)
+			);
+			BufferedImage scaledTile = image.original.getScaledTile(dimension);
+			g2d.drawImage(scaledTile, 0, 0, null);
+		} else {
+			drawMap(g2d, image.getScaledMap(scale));			
+		}
+	}
+	
+	private void drawMap(Graphics2D g2d, LargeImageMap map) {
 		Tile tile;
 		Point position;
+		boolean inX, inY;
 		Dimension dimension;
 		BufferedImage scaledTile;
-		boolean inX, inY;
+
+		Point anchor = getViewPosition();
+		
+		double width = getExtentSize().getWidth();
+		double height = getExtentSize().getHeight();
 		
 		for (int x = 0; x < image.cols ; x++) {
 			for (int y = 0; y < image.rows ; y++) {
@@ -79,10 +99,9 @@ class LargeImageComponent extends JComponent implements MouseListener, MouseMoti
 				inY = position.y + dimension.height > anchor.y && position.y < anchor.y + height;
 				
 				if(inX && inY) {
-					//scaledTile = tile.getScaledTile(scale, dimension);
-					scaledTile = tile.getScaledTile(scale);
+					scaledTile = tile.getScaledTile(dimension);
 					g2d.drawImage(scaledTile, position.x, position.y, null);
-					g2d.drawRect(position.x, position.y, scaledTile.getWidth(), scaledTile.getHeight());
+					//g2d.drawRect(position.x, position.y, scaledTile.getWidth(), scaledTile.getHeight());
 				}
 			}
 		}
@@ -109,24 +128,38 @@ class LargeImageComponent extends JComponent implements MouseListener, MouseMoti
 		setViewPosition(new Point(x, y));
 		dragStart = dragEnd;
 		
-		//revalidate();
 		repaint();
+	}
+	
+	@Override public void setSize(Dimension d) {
+		setMinimumSize(d);
+	    setPreferredSize(d);
+		super.setSize(d);
 	}
 
 	@Override public void mouseWheelMoved(MouseWheelEvent event) {
-		scale -= event.getWheelRotation() * 0.075;
+		Double initialScale = scale;
+		scale -= event.getWheelRotation() * 0.075;		
+		
 		scale = Math.max(scale, 0.1);
 		scale = Math.min(scale, 3);
 		
-		LargeImageMap map = image.getScaledMap(scale);
+		if(scale < 1.0) {
+			Tile tile = image.original;
+			setSize(new Dimension((int) (tile.width * scale), (int) (tile.height * scale)));
+		} else {
+			LargeImageMap map = image.getScaledMap(scale);
+		    setSize(map.bounds);
+		}
 		
-		setMinimumSize(map.bounds);
-	    setPreferredSize(map.bounds);
-	    setSize(map.bounds);
-	    
-	    //getParent().getParent().validate();
-	    
-		//revalidate();
+		/*Rectangle viewRect = getParent().getViewRect();
+		getParent().setViewPosition(
+			new Point(
+				(int) (viewRect.x - viewRect.width / 2),
+				(int) (viewRect.y - viewRect.height / 2)
+			)
+		);*/
+
 		repaint();
 	}
 	

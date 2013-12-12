@@ -1,3 +1,4 @@
+import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -6,13 +7,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TileCacheStore {
-	public static final int MAX_MEMORY = 100000;
+	public static final int MAX_MEMORY = 1000 * 1000;
 	protected static int LIFE = 0;
 	protected static int SIZE = 0;
 	protected static HashMap<ScaledTileCacheKey, ScaledTileCacheValue> cache = new HashMap<ScaledTileCacheKey, ScaledTileCacheValue>();
 	
-	public static BufferedImage get(Double scale, Tile tile) {
-		ScaledTileCacheKey key = new ScaledTileCacheKey(scale, tile);
+	public static BufferedImage get(Dimension dimension, Tile tile) {
+		ScaledTileCacheKey key = new ScaledTileCacheKey(dimension, tile);
 		ScaledTileCacheValue tileCache = cache.get(key);
 		
 		if(tileCache != null) {
@@ -24,8 +25,8 @@ public class TileCacheStore {
 		return null;
 	}
 
-	public static BufferedImage put(Double scale, Tile tile, BufferedImage image) {
-		ScaledTileCacheKey key = new ScaledTileCacheKey(scale, tile);
+	public static BufferedImage put(Dimension dimension, Tile tile, BufferedImage image) {
+		ScaledTileCacheKey key = new ScaledTileCacheKey(dimension, tile);
 		ScaledTileCacheValue tileCache = new ScaledTileCacheValue(1, ++LIFE, image);
 		SIZE += tileCache.getSize();
 		

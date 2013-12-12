@@ -1,16 +1,18 @@
+import java.awt.Dimension;
+
 public class ScaledTileCacheKey {
 	public final Tile tile;
-	public final Double scale;
+	public final Dimension dimension;
 	
-	public ScaledTileCacheKey(Double scale, Tile tile) {
-		this.scale = scale;
+	public ScaledTileCacheKey(Dimension dimension, Tile tile) {
+		this.dimension = dimension;
 		this.tile = tile;
 	}
 
 	@Override public int hashCode() {
 		final int prime = 53;
 		int result = 1;
-		result = prime * result + ((scale == null) ? 0 : DoubleKey.getKey(scale));
+		result = prime * result + ((dimension == null) ? 0 : dimension.hashCode());
 		result = prime * result + ((tile == null) ? 0 : tile.hashCode());
 		return result;
 	}
@@ -24,7 +26,7 @@ public class ScaledTileCacheKey {
 			return false;
 		
 		ScaledTileCacheKey other = (ScaledTileCacheKey) obj;
-		if (!DoubleKey.getKey(scale).equals(DoubleKey.getKey(other.scale)))
+		if (!dimension.equals(dimension))
 			return false;
 		if (!tile.equals(other.tile))
 			return false;
