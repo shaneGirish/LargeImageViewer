@@ -144,12 +144,14 @@ class LargeImageComponent extends JComponent implements MouseListener, MouseMoti
 		Double scaleRatio = scale;
 		scale -= event.getWheelRotation() * scaleIncrement;
 		
+		//scale = Math.round(scale*100)/100.0;
+		
 		scale = Math.max(scale, 0.1);
-		scale = Math.min(scale, 3);
+		scale = Math.min(scale, 3.0);
 		
 		scaleRatio = scale / scaleRatio;
 		
-		if(scale < 1.0) {
+		if(aboveTilingThreshold()) {
 			Tile tile = image.original;
 			setSize(new Dimension((int) (tile.width * scale), (int) (tile.height * scale)));
 		} else {

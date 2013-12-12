@@ -39,7 +39,7 @@ public class Tile {
 					}
 				}
 			);
-			return Scalr.resize(data, Method.SPEED, Mode.FIT_EXACT, dimension.width, dimension.height);	*/
+			return Scalr.resize(data, Method.SPEED, Mode.FIT_EXACT, dimension.width, dimension.height);*/
 			
 			scaledTile = Scalr.resize(data, Method.QUALITY, Mode.FIT_EXACT, dimension.width, dimension.height);
 			TileCacheStore.put(dimension, this, scaledTile);

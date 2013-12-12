@@ -1,7 +1,6 @@
 import java.awt.Dimension;
 import java.awt.Point;
 
-
 public class LargeImageMap {
 	public final Point[][] positions;
 	public final Dimension[][] dimensions;
