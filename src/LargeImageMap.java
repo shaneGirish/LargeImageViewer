@@ -13,8 +13,8 @@ public class LargeImageMap {
 
 		Tile[][] tiles = image.tiles;
 		
-		int w = (int) (tiles[0][0].width * scale);
-		int h = (int) (tiles[0][0].height * scale);
+		int w = (int) Math.floor(tiles[0][0].width * scale);
+		int h = (int) Math.floor(tiles[0][0].height * scale);
 		
 		int width = w, height = h;
 		int x,y;
@@ -23,30 +23,36 @@ public class LargeImageMap {
 		dimensions[0][0] = new Dimension(w, h);
 		
 		for (x = 1; x < image.cols; x++) {
-			w = (int) (tiles[x][0].width * scale);
-			h = (int) (tiles[x][0].height * scale);
+			w = (int) Math.ceil(tiles[x][0].width * scale);
+			h = (int) Math.ceil(tiles[x][0].height * scale);
 			
 			width += w;
 			
 			positions[x][0] = new Point(positions[x-1][0].x + dimensions[x-1][0].width, positions[x-1][0].y);
-			dimensions[x][0] = new Dimension((int) (tiles[x][0].width * scale), (int) (tiles[x][0].height * scale));
+			dimensions[x][0] = new Dimension(
+				(int) Math.ceil(tiles[x][0].width * scale),
+				(int) Math.ceil(tiles[x][0].height * scale)
+			);
 		}
 		
 		for (y = 1; y < image.rows; y++) {
-			w = (int) (tiles[0][y].width * scale);
-			h = (int) (tiles[0][y].height * scale);
+			w = (int) Math.ceil(tiles[0][y].width * scale);
+			h = (int) Math.ceil(tiles[0][y].height * scale);
 			
 			height += h;
 			
 			positions[0][y] = new Point(positions[0][y-1].x, positions[0][y-1].y + dimensions[0][y-1].height);
-			dimensions[0][y] = new Dimension((int) (tiles[0][y].width * scale), (int) (tiles[0][y].height * scale));
+			dimensions[0][y] = new Dimension(
+				(int) Math.ceil(tiles[0][y].width * scale),
+				(int) Math.ceil(tiles[0][y].height * scale)
+			);
 		}
 		
 		
 		for (x = 1; x < image.cols; x++) {
 			for (y = 1; y < image.rows; y++) {
-				w = (int) (tiles[x][y].width * scale);
-				h = (int) (tiles[x][y].height * scale);
+				w = (int) Math.ceil(tiles[x][y].width * scale);
+				h = (int) Math.ceil(tiles[x][y].height * scale);
 				
 				positions[x][y] = new Point(
 					positions[x][y-1].x,

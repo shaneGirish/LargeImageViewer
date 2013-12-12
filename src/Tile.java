@@ -1,9 +1,11 @@
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 import org.imgscalr.Scalr;
 import org.imgscalr.Scalr.Method;
+import org.imgscalr.Scalr.Mode;
 
 public class Tile {
 	protected final Tile self;
@@ -19,16 +21,14 @@ public class Tile {
 		this.height = data.getHeight();
 		this.position = position;
 		this.data = data;
-		TileCacheStore.put(1.0, this, this.data);
+		TileCacheStore.put(new Dimension(width, height), this, this.data);
 	}
 	
-	public BufferedImage getScaledTile(double scale) {
-		BufferedImage scaledTile = TileCacheStore.get(scale, this);
+	public BufferedImage getScaledTile(Dimension dimension) {
+		BufferedImage scaledTile = TileCacheStore.get(dimension, this);
 		if(scaledTile == null) {
-			int newWidth = (int) (width * scale);
-			int newHeight = (int) (height * scale);
 			/*TileResizer.add(
-				AsyncScalr.resize(data, Method.ULTRA_QUALITY, newWidth, newHeight),
+				AsyncScalr.resize(data, Method.ULTRA_QUALITY, Mode.FIT_EXACT, newWidth, newHeight),
 				new Callback<BufferedImage>() {
 					@Override void invoke(BufferedImage result) {
 						cache.put(key, result);
@@ -39,10 +39,10 @@ public class Tile {
 					}
 				}
 			);
-			return Scalr.resize(data, Method.SPEED, newWidth, newHeight);
+			return Scalr.resize(data, Method.SPEED, Mode.FIT_EXACT, newWidth, newHeight);
 			*/
-			scaledTile = Scalr.resize(data, Method.QUALITY, newWidth, newHeight);
-			TileCacheStore.put(scale, this, scaledTile);
+			scaledTile = Scalr.resize(data, Method.QUALITY, Mode.FIT_EXACT, dimension.width, dimension.height);
+			TileCacheStore.put(dimension, this, scaledTile);
 		}
 			
 		return scaledTile;
