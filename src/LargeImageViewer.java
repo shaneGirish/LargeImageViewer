@@ -15,7 +15,7 @@ class LargeImageViewer extends JScrollPane {
 	public static void main(String[] args) {
 		try {
 			JFrame window = new JFrame();
-			window.add(new LargeImageViewer("Edinburgh.jpg"));
+			window.add(new LargeImageViewer("stars.jpg"));
 			window.setSize(800, 600);
 			window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			window.setVisible(true);

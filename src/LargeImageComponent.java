@@ -22,6 +22,8 @@ class LargeImageComponent extends JComponent implements MouseListener, MouseMoti
 	
 	protected Point dragStart;
 	protected double scale = 1;
+	
+	protected static double scaleIncrement = 0.1;
 
 	public LargeImageComponent(String url) throws IOException {
 		super();
@@ -101,7 +103,7 @@ class LargeImageComponent extends JComponent implements MouseListener, MouseMoti
 				if(inX && inY) {
 					scaledTile = tile.getScaledTile(dimension);
 					g2d.drawImage(scaledTile, position.x, position.y, null);
-					//g2d.drawRect(position.x, position.y, scaledTile.getWidth(), scaledTile.getHeight());
+					g2d.drawRect(position.x, position.y, scaledTile.getWidth(), scaledTile.getHeight());
 				}
 			}
 		}
@@ -132,17 +134,20 @@ class LargeImageComponent extends JComponent implements MouseListener, MouseMoti
 	}
 	
 	@Override public void setSize(Dimension d) {
-		setMinimumSize(d);
 	    setPreferredSize(d);
+	    //setMinimumSize(d);
+	    //setMaximumSize(d);
 		super.setSize(d);
 	}
 
 	@Override public void mouseWheelMoved(MouseWheelEvent event) {
-		Double initialScale = scale;
-		scale -= event.getWheelRotation() * 0.075;		
+		Double scaleRatio = scale;
+		scale -= event.getWheelRotation() * scaleIncrement;
 		
 		scale = Math.max(scale, 0.1);
 		scale = Math.min(scale, 3);
+		
+		scaleRatio = scale / scaleRatio;
 		
 		if(scale < 1.0) {
 			Tile tile = image.original;
@@ -152,13 +157,13 @@ class LargeImageComponent extends JComponent implements MouseListener, MouseMoti
 		    setSize(map.bounds);
 		}
 		
-		/*Rectangle viewRect = getParent().getViewRect();
+		Rectangle viewRect = getParent().getViewRect();
 		getParent().setViewPosition(
 			new Point(
-				(int) (viewRect.x - viewRect.width / 2),
-				(int) (viewRect.y - viewRect.height / 2)
+				(int) ((viewRect.x + viewRect.width/2) * scaleRatio - viewRect.width/2),
+				(int) ((viewRect.y + viewRect.height/2) * scaleRatio - viewRect.height/2)
 			)
-		);*/
+		);
 
 		repaint();
 	}
@@ -169,7 +174,7 @@ class LargeImageComponent extends JComponent implements MouseListener, MouseMoti
 	@Override public void mouseEntered(MouseEvent event) {}
 	@Override public void mouseReleased(MouseEvent event) {}
 
-	@Override public void tileResized(Tile tile, double scale) {
+	@Override public void tileResized(Tile tile) {
 		repaint();
 	}
 }

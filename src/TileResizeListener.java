@@ -1,3 +1,3 @@
 public interface TileResizeListener {
-	void tileResized(Tile self, double scale);
+	void tileResized(Tile self);
 }

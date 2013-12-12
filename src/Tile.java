@@ -24,38 +24,29 @@ public class Tile {
 		TileCacheStore.put(new Dimension(width, height), this, this.data);
 	}
 	
-	public BufferedImage getScaledTile(Dimension dimension) {
+	public BufferedImage getScaledTile(final Dimension dimension) {
 		BufferedImage scaledTile = TileCacheStore.get(dimension, this);
 		if(scaledTile == null) {
 			/*TileResizer.add(
-				AsyncScalr.resize(data, Method.ULTRA_QUALITY, Mode.FIT_EXACT, newWidth, newHeight),
+				AsyncScalr.resize(data, Method.ULTRA_QUALITY, Mode.FIT_EXACT, dimension.width, dimension.height),
 				new Callback<BufferedImage>() {
 					@Override void invoke(BufferedImage result) {
-						cache.put(key, result);
+						TileCacheStore.put(dimension, self, result);
 
 						for (TileResizeListener listener : listeners) {
-							listener.tileResized(self, scale);
+							listener.tileResized(self);
 						}
 					}
 				}
 			);
-			return Scalr.resize(data, Method.SPEED, Mode.FIT_EXACT, newWidth, newHeight);
-			*/
+			return Scalr.resize(data, Method.SPEED, Mode.FIT_EXACT, dimension.width, dimension.height);	*/
+			
 			scaledTile = Scalr.resize(data, Method.QUALITY, Mode.FIT_EXACT, dimension.width, dimension.height);
 			TileCacheStore.put(dimension, this, scaledTile);
 		}
 			
 		return scaledTile;
 	}
-
-	/*@Override public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + height;
-		result = prime * result + ((position == null) ? 0 : position.hashCode());
-		result = prime * result + width;
-		return result;
-	}*/
 
 	@Override public boolean equals(Object obj) {
 		if (this == obj)
